@@ -117,9 +117,9 @@ MazeIO/
 ├── lib/                  # Compiled external libraries (GLFW)
 ├── build/                # Output directory for executables
 ├── docs/                 # Documentation and assets (Images/GIFs go here)
+│   ├── MazeIO_Project_Report.md # Formal Academic Project Report
+│   └── contribution_details.md  # Team Presentation Script
 ├── Makefile              # Cross-platform build script
-├── MazeIO_Project_Report.md # Formal Academic Project Report
-└── contribution_details.md  # Team Presentation Script
 ```
 
 ---
