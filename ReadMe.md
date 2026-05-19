@@ -128,10 +128,10 @@ MazeIO/
 
 Developed by students of the **Department of CSE**, Spring 2026 Intake:
 
-* **Kazi Md Azhar Uddin Abir** *(0432320005101120)* – Core OpenGL & Shader Programming
-* **Ahamad Abdali Khan** *(0432320005101118)* – Physics, Collisions & Build Engine
-* **Sabikun Nahar Alina** *(0432320005101016)* – Grid Math & Trail Arrays
-* **Faria Chowdhury** *(0432220005101042)* – UI Neon Tuning, Modulation & Docs
+* **Kazi Md Azhar Uddin Abir** *(0432320005101120)* – OpenGL Context, Render Loop & Vertex Shaders
+* **Ahamad Abdali Khan** *(0432320005101118)* – Fragment Shaders, Proximity Lighting Math & Build System
+* **Sabikun Nahar Alina** *(0432320005101016)* – Collision Physics, Input Mechanics & VBO Memory
+* **Faria Chowdhury** *(0432220005101042)* – Trigonometric Light Math, Vector History & Trail Decay
 
 *Supervised by Lab Instructors: Any Chowdhury (AC) & Audity Ghosh*
 

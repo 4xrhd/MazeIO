@@ -2,27 +2,40 @@
 // MazeIO - A top-down maze explorer where the player "emits light" to see walls
 // ============================================================================
 //
-// HOW THIS PROGRAM WORKS (High-Level Overview):
-// 1. A 10x10 grid defines the maze layout (walls, paths, goal).
-// 2. OpenGL renders the maze in a dark scene; a fragment shader makes objects
-//    glow only when the player is nearby (proximity lighting).
-// 3. Each frame: handle input → update player position → draw everything.
-// 4. The player leaves a fading trail behind as they move.
-// 5. Reaching the goal cell (value 2) triggers a win condition.
+// TEAM MEMBERS & BALANCED CONTRIBUTIONS:
+// 1. Kazi Md Azhar Uddin Abir (0432320005101120)
+//    - OpenGL Context Creation, Window Initialization, & Window Resize
+//    Callbacks
+//    - Main Rendering Loop and State Controller Architecture
+//    - Vertex Shader Compilation & Normalized Device Coordinate (NDC) Grid
+//    Mapping
 //
-// RENDERING PIPELINE SUMMARY:
-//   CPU (this file)                          GPU (shaders)
-//   ─────────────────                        ────────────────
-//   Build vertex data for walls/goal/player → Vertex Shader transforms coords
-//   Send uniforms (player pos, color, time) → Fragment Shader calculates light
-//   Issue draw calls per object type        → Pixels rendered to screen
+// 2. Ahamad Abdali Khan (0432320005101118)
+//    - Fragment Shader Architecture & Pixel Pipeline Execution
+//    - Proximity Lighting Mathematics (Euclidean Distance & smoothstep
+//    attenuation)
+//    - Multi-platform C++ Build Configuration (Linux & Windows makefile
+//    automation)
+//
+// 3. Sabikun Nahar Alina (0432320005101016)
+//    - Grid-Based Collision Detection Physics Engine
+//    - Step Cooldown Input Constraint Mechanics (0.15s Delta Time Filter)
+//    - GPU Dynamic Buffer streaming (VAO/VBO configurations & glBufferSubData)
+//
+// 4. Faria Chowdhury (0432220005101042)
+//    - Advanced Shader Math (Sine/Cosine product spotlight flickering
+//    modulation)
+//    - Trail Vector History Management (C++ STL vector FIFO list)
+//    - Alpha Fading Trail Decay Math (Linear Interpolation for trail opacity)
+//
 // ============================================================================
 
 /**
  * @file main.cpp
  * @brief MazeIO - An OpenGL 3.3 Core Profile 2D Maze Game
- * @details Implements a dynamic fragment shader for proximity lighting
- *          and grid-based collision detection.
+ * @details Implements a dynamic fragment shader for proximity lighting,
+ *          time-based flickering, fading movement trails, and collision
+ * detection.
  */
 // --- Library Includes ---
 #include "glad.h"  // OpenGL function loader - must be included BEFORE glfw
@@ -80,39 +93,41 @@ int maze[10][10] = {
 struct Position {
   int x, y; // Grid coordinates (column, row)
 };
-int playerGridX = 1;              // Player starting column (maze[1][1])
-int playerGridY = 1;              // Player starting row
-std::vector<Position> trail;      // Stores recent positions for the trail effect
-const int MAX_TRAIL_SIZE = 8;     // Maximum number of trail segments to show
-float lastMoveTime = 0.0f;        // Timestamp of last move (for input cooldown)
-bool gameWon = false;             // Flag to prevent repeated win triggers
+int playerGridX = 1;          // Player starting column (maze[1][1])
+int playerGridY = 1;          // Player starting row
+std::vector<Position> trail;  // Stores recent positions for the trail effect
+const int MAX_TRAIL_SIZE = 8; // Maximum number of trail segments to show
+float lastMoveTime = 0.0f;    // Timestamp of last move (for input cooldown)
+bool gameWon = false;         // Flag to prevent repeated win triggers
 
 // ============================================================================
 // SHADERS (GLSL code that runs on the GPU)
 // ============================================================================
 
 // --- Vertex Shader ---
-// PURPOSE: Transforms each vertex position and passes it to the fragment shader.
-// INPUT:   aPos (vec3) - the x,y,z position of each vertex
-// OUTPUT:  FragPos (vec2) - the x,y position sent to the fragment shader
+// AUTHOR: Kazi Md Azhar Uddin Abir
+// PURPOSE: Transforms each vertex position and passes it to the fragment
+// shader. INPUT:   aPos (vec3) - the x,y,z position of each vertex OUTPUT:
+// FragPos (vec2) - the x,y position sent to the fragment shader
 //          gl_Position - the final screen position of the vertex
 //
 // Since we already use Normalized Device Coordinates (NDC: -1 to +1),
 // there is no need for a projection matrix - positions pass through directly.
-const char *vertexShaderSource =
-    "#version 330 core\n"
-    "layout (location = 0) in vec3 aPos;\n"
-    "out vec2 FragPos;\n"
-    "void main()\n"
-    "{\n"
-    "   gl_Position = vec4(aPos, 1.0);\n"
-    "   FragPos = vec2(aPos.x, aPos.y);\n"
-    "}\0";
+const char *vertexShaderSource = "#version 330 core\n"
+                                 "layout (location = 0) in vec3 aPos;\n"
+                                 "out vec2 FragPos;\n"
+                                 "void main()\n"
+                                 "{\n"
+                                 "   gl_Position = vec4(aPos, 1.0);\n"
+                                 "   FragPos = vec2(aPos.x, aPos.y);\n"
+                                 "}\0";
 
 // --- Fragment Shader ---
-// PURPOSE: Calculates the color of each pixel based on proximity to the player.
-//          This creates the "emitting light" effect - objects far from the player
-//          appear dark, while nearby objects glow brightly.
+// CO-AUTHORS: Ahamad Abdali Khan (Lighting & Pipeline) & Faria Chowdhury
+// (Advanced Trigonometric Modulation) PURPOSE: Calculates the color of each
+// pixel based on proximity to the player.
+//          This creates the "emitting light" effect - objects far from the
+//          player appear dark, while nearby objects glow brightly.
 //
 // UNIFORMS (values sent from CPU each frame):
 //   playerPos - the player's center position in NDC space
@@ -120,9 +135,11 @@ const char *vertexShaderSource =
 //   time      - elapsed time used for the flickering animation
 //
 // HOW THE LIGHTING WORKS:
-//   1. Calculate distance from this pixel to the player
+//   1. Calculate distance from this pixel to the player (Ahamad Abdali Khan)
 //   2. smoothstep() maps distance to intensity: 1.0 at center → 0.0 at edge
-//   3. A subtle sin/cos flicker makes the light feel alive
+//   (Ahamad Abdali Khan)
+//   3. A subtle sin/cos product flicker makes the light feel alive (Faria
+//   Chowdhury)
 //   4. Final color = baseColor * intensity (dark pixels become invisible)
 const char *fragmentShaderSource =
     "#version 330 core\n"
@@ -133,9 +150,11 @@ const char *fragmentShaderSource =
     "uniform float time;\n"
     "void main()\n"
     "{\n"
+    "   // Proximity Lighting Math by Ahamad Abdali Khan\n"
     "   float dist = distance(FragPos, playerPos);\n"
     "   float radius = 0.5f;\n"
     "   \n"
+    "   // Trigonometric Flickering spotlight mathematics by Faria Chowdhury\n"
     "   float flicker = 1.0 + 0.05 * sin(time * 15.0) * cos(time * 10.0);\n"
     "   \n"
     "   float intensity = 1.0 - smoothstep(0.0, radius, dist);\n"
@@ -151,6 +170,7 @@ int main() {
 
   // --------------------------------------------------------------------------
   // PHASE 1: Initialize GLFW and create a window
+  // AUTHOR: Kazi Md Azhar Uddin Abir
   // --------------------------------------------------------------------------
   // GLFW handles: window creation, OpenGL context, and keyboard input.
   // We request OpenGL 3.3 Core Profile (no deprecated fixed-function pipeline).
@@ -191,15 +211,14 @@ int main() {
   // --------------------------------------------------------------------------
 #ifdef _WIN32
   // Windows: show a native dialog popup
-  MessageBoxA(
-      NULL,
-      "Welcome to MazeIO!\n"
-      "A top-down maze explorer where you emit light to see walls.\n\n"
-      "Controls:\n"
-      "W/A/S/D - Move\n"
-      "ESC - Quit\n\n"
-      "Objective: Reach the Green Goal!",
-      "MazeIO - Welcome", MB_OK | MB_ICONINFORMATION);
+  MessageBoxA(NULL,
+              "Welcome to MazeIO!\n"
+              "A top-down maze explorer where you emit light to see walls.\n\n"
+              "Controls:\n"
+              "W/A/S/D - Move\n"
+              "ESC - Quit\n\n"
+              "Objective: Reach the Green Goal!",
+              "MazeIO - Welcome", MB_OK | MB_ICONINFORMATION);
 #else
   // Linux/Mac: print to the terminal
   std::cout << "Welcome to MazeIO!\n"
@@ -249,7 +268,7 @@ int main() {
 
   std::vector<float> wallVertices; // Stores all wall triangle vertices
   std::vector<float> goalVertices; // Stores goal triangle vertices
-  float cellSize = 0.2f;          // Each cell = 0.2 NDC units (2.0 / 10)
+  float cellSize = 0.2f;           // Each cell = 0.2 NDC units (2.0 / 10)
 
   for (int y = 0; y < 10; y++) {
     for (int x = 0; x < 10; x++) {
@@ -294,6 +313,7 @@ int main() {
 
   // --------------------------------------------------------------------------
   // PHASE 6: Create OpenGL buffer objects (VAO + VBO) for each drawable
+  // AUTHOR: Sabikun Nahar Alina (Dynamic GPU buffer & layout attribute maps)
   // --------------------------------------------------------------------------
   // VAO (Vertex Array Object): remembers the vertex attribute configuration.
   // VBO (Vertex Buffer Object): holds the actual vertex data on the GPU.
@@ -340,6 +360,7 @@ int main() {
 
   // ==========================================================================
   // PHASE 7: Main render loop (runs every frame until window is closed)
+  // AUTHOR: Kazi Md Azhar Uddin Abir (Render loop execution & buffer swapping)
   // ==========================================================================
   // Each iteration of this loop is ONE FRAME. The loop:
   //   1. Reads keyboard input and updates player position
@@ -347,15 +368,16 @@ int main() {
   //   3. Draws walls, goal, trail, and player (in that order)
   //   4. Swaps buffers (double buffering prevents flickering)
   //   5. Checks if the player reached the goal
-
+  //
   while (!glfwWindowShouldClose(window)) {
 
     // --- Step 1: Process keyboard input and update player grid position ---
     processInput(window);
 
     // --- Step 2: Convert player grid position to NDC for the shader ---
-    // The shader needs the player's CENTER position to calculate light distance.
-    // We add half a cell size to get the center instead of the top-left corner.
+    // The shader needs the player's CENTER position to calculate light
+    // distance. We add half a cell size to get the center instead of the
+    // top-left corner.
     float playerNdcX = -1.0f + (playerGridX * cellSize) + (cellSize / 2.0f);
     float playerNdcY = 1.0f - (playerGridY * cellSize) - (cellSize / 2.0f);
 
@@ -405,8 +427,9 @@ int main() {
     int baseColorLoc = glGetUniformLocation(shaderProgram, "baseColor");
     int timeLoc = glGetUniformLocation(shaderProgram, "time");
 
-    glUniform2f(playerPosLoc, playerNdcX, playerNdcY); // Player center for lighting
-    glUniform1f(timeLoc, (float)glfwGetTime());         // Elapsed time for flicker
+    glUniform2f(playerPosLoc, playerNdcX,
+                playerNdcY);                    // Player center for lighting
+    glUniform1f(timeLoc, (float)glfwGetTime()); // Elapsed time for flicker
 
     // --- Step 5: Draw all objects ---
     // Each object type gets a different baseColor uniform before drawing.
@@ -423,10 +446,12 @@ int main() {
     glDrawArrays(GL_TRIANGLES, 0, goalVertices.size() / 3);
 
     // Draw Trail segments — Fading Magenta
-    // The trail is a list of the player's recent positions.
-    // Older trail segments get smaller and dimmer (alpha decreases).
+    // AUTHOR: Faria Chowdhury (Trail coordinate generation and linear alpha
+    // decay) The trail is a list of the player's recent positions. Older trail
+    // segments get smaller and dimmer (alpha decreases).
     for (size_t i = 0; i < trail.size(); i++) {
-      // Calculate fade: newer segments (lower i) are brighter
+      // Calculate linear alpha decay fade: newer segments (lower i) are
+      // brighter
       float alpha = 1.0f - ((float)(i + 1) / (MAX_TRAIL_SIZE + 1));
       glUniform3f(baseColorLoc, 1.0f * alpha, 0.0f, 1.0f * alpha);
 
@@ -522,8 +547,9 @@ int main() {
 
 /**
  * @brief Processes keyboard inputs and manages player movement physics.
+ * @author Sabikun Nahar Alina (Collision checks & step interval cooldown)
  * @param window The GLFW window context.
- * @details Implements a 0.15s cooldown mechanism to normalize grid movement 
+ * @details Implements a 0.15s cooldown mechanism to normalize grid movement
  *          speeds independent of the high hardware frame rates.
  */
 void processInput(GLFWwindow *window) {
@@ -531,7 +557,7 @@ void processInput(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     glfwSetWindowShouldClose(window, true);
 
-  // Input cooldown: only allow a move every 150ms
+  // Input cooldown physics: only allow a move every 150ms (Sabikun Nahar Alina)
   float currentTime = glfwGetTime();
   if (currentTime - lastMoveTime > 0.15f) {
     int nextX = playerGridX;

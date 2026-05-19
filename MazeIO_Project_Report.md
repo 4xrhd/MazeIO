@@ -282,7 +282,7 @@ clean:
 
 ## 9. Student Contribution Matrix
 
-To ensure balanced implementation and collaboration, tasks were distributed equitably among team members:
+To ensure balanced implementation and collaboration, core system tasks were distributed equitably among team members so everyone contributed to the OpenGL pipeline, C++ logic, and mathematical modeling:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -290,21 +290,21 @@ To ensure balanced implementation and collaboration, tasks were distributed equi
 ├───────────────────────────┬────────────────────────────────────────────┤
 │ Student Name              │ Primary Responsibilities                   │
 ├───────────────────────────┼────────────────────────────────────────────┤
-│ Kazi Md Azhar Uddin Abir  │ - Core OpenGL Engine Context Setup         │
-│                           │ - Vertex & Fragment Shader Programming     │
-│                           │ - Dynamic Proximity Lighting Mathematics   │
+│ Kazi Md Azhar Uddin Abir  │ - OpenGL Window Context Initialization     │
+│                           │ - Main Render Loop Architecture            │
+│                           │ - Vertex Shader & NDC Geometry Mapping     │
 ├───────────────────────────┼────────────────────────────────────────────┤
-│ Ahamad Abdali Khan        │ - Collision Detection Architecture         │
-│                           │ - Keyboard Input Handler & Cooldowns       │
-│                           │ - Multi-platform Makefile & Build Engine   │
+│ Ahamad Abdali Khan        │ - Fragment Shader Architecture             │
+│                           │ - Proximity Lighting Math (smoothstep)     │
+│                           │ - Multi-platform C++ Build System          │
 ├───────────────────────────┼────────────────────────────────────────────┤
-│ Sabikun Nahar Alina       │ - Grid Map Structuring & Coordinate Map    │
-│                           │ - Dynamic Trail Vector Implementation      │
-│                           │ - VBO Dynamic Data Loading Logic           │
+│ Sabikun Nahar Alina       │ - Grid-Based Collision Physics Engine      │
+│                           │ - Movement Mechanics & Cooldown Logic      │
+│                           │ - Dynamic VAO/VBO Memory Management        │
 ├───────────────────────────┼────────────────────────────────────────────┤
-│ Faria Chowdhury           │ - UI Colors, Neon Color Tuning             │
-│                           │ - Flickering Light Function Modulation     │
-│                           │ - Report Preparation & Documentation       │
+│ Faria Chowdhury           │ - Advanced Shader Math (Trigonometric)     │
+│                           │ - Vector History (Fading Trail System)     │
+│                           │ - Alpha Decay Linear Interpolation         │
 └───────────────────────────┴────────────────────────────────────────────┘
 ```
 
