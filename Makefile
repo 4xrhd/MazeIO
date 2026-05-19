@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -fdiagnostics-color=always -Wall
+CXXFLAGS = -std=c++17 -O2 -fdiagnostics-color=always -Wall -Wextra
 INCLUDES = -I./include
 SRCS = ./src/main.cpp ./src/glad.c
 

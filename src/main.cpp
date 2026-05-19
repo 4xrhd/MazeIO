@@ -18,6 +18,12 @@
 //   Issue draw calls per object type        → Pixels rendered to screen
 // ============================================================================
 
+/**
+ * @file main.cpp
+ * @brief MazeIO - An OpenGL 3.3 Core Profile 2D Maze Game
+ * @details Implements a dynamic fragment shader for proximity lighting
+ *          and grid-based collision detection.
+ */
 // --- Library Includes ---
 #include "glad.h"  // OpenGL function loader - must be included BEFORE glfw
 #include "glfw3.h" // Window creation, input handling, and OpenGL context
@@ -513,6 +519,13 @@ int main() {
 //   - Movement is blocked if the target cell is a wall (value 1)
 //   - A 150ms cooldown prevents the player from moving too fast
 //   - Each move pushes the old position onto the trail (max 8 entries)
+
+/**
+ * @brief Processes keyboard inputs and manages player movement physics.
+ * @param window The GLFW window context.
+ * @details Implements a 0.15s cooldown mechanism to normalize grid movement 
+ *          speeds independent of the high hardware frame rates.
+ */
 void processInput(GLFWwindow *window) {
   // ESC key: immediately close the window
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -557,5 +570,6 @@ void processInput(GLFWwindow *window) {
 // Called automatically by GLFW whenever the user resizes the window.
 // Updates the OpenGL viewport to match the new window dimensions.
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
+  (void)window; // Silence unused parameter warning
   glViewport(0, 0, width, height);
 }
